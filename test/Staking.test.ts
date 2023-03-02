@@ -169,7 +169,7 @@ describe("Staking", function () {
                 stakingToken.address,
                 ethers.utils.parseEther("100")
             );
-            await ethers.provider.send("evm_increaseTime", [2592000]);
+            await ethers.provider.send("evm_increaseTime", [YEAR_IN_SECONDS]);
             await ethers.provider.send("evm_mine", []);
 
             const tx = await staking.connect(user).exit(
@@ -186,6 +186,14 @@ describe("Staking", function () {
             await expect(
                 tx
             ).to.emit(staking, "RewardPaid");
+            expect(
+                (
+                    await staking.getRewardTokenState(
+                        stakingToken.address,
+                        mockToken1.address
+                    )
+                )[0]
+            ).to.equal(0)
         });
 
         it("Exit after new tokens added to rewards", async () => {
@@ -195,18 +203,19 @@ describe("Staking", function () {
                 stakingToken.address,
                 ethers.utils.parseEther("100")
             );
+
             await ethers.provider.send("evm_increaseTime", [MONTH_IN_SECONDS]);
             await ethers.provider.send("evm_mine", []);
             await ethers.provider.send("evm_increaseTime", [MONTH_IN_SECONDS]);
             await ethers.provider.send("evm_mine", []);
 
             await mockToken1.connect(deployer).approve(staking.address, ethers.utils.parseEther("400"));
-            // await staking.connect(deployer).addRewardsToPool(
-            //     stakingToken.address,
-            //     mockToken1.address,
-            //     ethers.utils.parseEther("400"),
-            //     MONTH_IN_SECONDS
-            // );
+            await staking.connect(deployer).addRewardsToPool(
+                stakingToken.address,
+                mockToken1.address,
+                ethers.utils.parseEther("400"),
+                MONTH_IN_SECONDS
+            );
             await ethers.provider.send("evm_increaseTime", [MONTH_IN_SECONDS+1]);
             await ethers.provider.send("evm_mine", []);
             await ethers.provider.send("evm_increaseTime", [MONTH_IN_SECONDS+1]);
@@ -231,7 +240,7 @@ describe("Staking", function () {
                         stakingToken.address,
                         mockToken1.address
                     )
-                )[0]
+                )[2]
             ).to.equal(0)
         });
     });

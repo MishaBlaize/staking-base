@@ -44,7 +44,7 @@ contract Staking is ReentrancyGuardUpgradeable, AccessControlUpgradeable {
     ) initializer public {
         __ReentrancyGuard_init();
         __AccessControl_init();
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         
         PoolInfo storage pool = poolInfo[_stakingToken];
         pool.rewardsDistribution = _rewardsDistribution;
@@ -197,7 +197,7 @@ contract Staking is ReentrancyGuardUpgradeable, AccessControlUpgradeable {
     function notifyRewardAmount(address stakingToken, address rewardToken, uint256 reward, uint256 rewardsDuration) internal updateRewards(stakingToken, address(0)) {
         PoolInfo storage pool = poolInfo[stakingToken];
         require(block.timestamp.add(rewardsDuration) >= pool.periodFinish[rewardToken], "Cannot reduce existing period");
-
+    
         if (block.timestamp >= pool.periodFinish[rewardToken]) {
             pool.rewardRate[rewardToken] = reward.div(rewardsDuration);
         } else {
@@ -223,13 +223,11 @@ contract Staking is ReentrancyGuardUpgradeable, AccessControlUpgradeable {
 
     modifier updateRewards(address stakingToken, address account) {
         PoolInfo storage pool = poolInfo[stakingToken];
-        if (account != address(0)) {
-            for (uint256 i = 0; i < pool.rewardTokens.length; i++) {
-                pool.rewardPerTokenStored[pool.rewardTokens[i]] = rewardPerToken(stakingToken, pool.rewardTokens[i]);
-                pool.lastUpdateTime[pool.rewardTokens[i]] = lastTimeRewardApplicable(stakingToken, pool.rewardTokens[i]);
-                pool.rewards[pool.rewardTokens[i]][account] = earned(stakingToken, pool.rewardTokens[i], account);
-                pool.userRewardPerTokenPaid[account][pool.rewardTokens[i]] = pool.rewardPerTokenStored[pool.rewardTokens[i]];
-            }
+        for (uint256 i = 0; i < pool.rewardTokens.length; i++) {
+            pool.rewardPerTokenStored[pool.rewardTokens[i]] = rewardPerToken(stakingToken, pool.rewardTokens[i]);
+            pool.lastUpdateTime[pool.rewardTokens[i]] = lastTimeRewardApplicable(stakingToken, pool.rewardTokens[i]);
+            pool.rewards[pool.rewardTokens[i]][account] = earned(stakingToken, pool.rewardTokens[i], account);
+            pool.userRewardPerTokenPaid[account][pool.rewardTokens[i]] = pool.rewardPerTokenStored[pool.rewardTokens[i]];
         }
         _;
     }
