@@ -1,0 +1,4 @@
+[
+  "function notifyRewardAmount(uint256,uint256)",
+  "function rewardsDistribution() view returns (address)"
+]
